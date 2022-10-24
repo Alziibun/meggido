@@ -1,7 +1,8 @@
 import discord
 import os
 import asyncio
-from datetime import datetime, timedelta
+from rcon.source import rcon
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from discord.ext import commands, tasks
 
@@ -14,7 +15,7 @@ intents.guilds = True
 
 bot = discord.Bot(intents=intents, debug_guilds=[1029286298156011600])
 
-chat = 1033897721721008128
+chat = 1029293109567307856
 server = 1029286298156011600
 @bot.event
 async def on_ready():
@@ -23,21 +24,42 @@ async def on_ready():
     server = bot.get_guild(server)
     chat = server.get_channel(chat)
 
+async def servermsg(message: str):
+    return await rcon('servermsg', f'"{message}"', host=os.getenv('RCON_HOST'), port=int(os.getenv('RCON_PORT')), passwd=os.getenv('RCON_PASSWORD'))
+
 @tasks.loop(minutes=1)
 async def restart_warning():
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     delta = now.hour // 6 + 1
-    next_restart = datetime(now.year, now.month, now.day, hour=6 * delta)
+    print('delta is', delta)
+    next_restart = datetime(now.year, now.month, now.day, hour=6 * delta, tzinfo=timezone.utc)
     print(now.replace(microsecond=0))
     until = next_restart - now.replace(microsecond=0)
-    times = [50, 45, 40, 35, 30, 10, 5, 1]
+    times = [30, 10, 5, 1]
     print(until)
     for minutes in times:
         print(until.seconds, minutes * 60)
         if until.seconds == minutes * 60:
-            await chat.send(f"The server restarts <t:{int(next_restart.timestamp())}:R>.")
+            await chat.send(f"**Server restart <t:{int(next_restart.timestamp())}:R>!**")
+            await servermsg(f"The server will restart in {minutes} minute(s)!")
             break
     print('loop finished.  next restart:', next_restart)
+
+def is_developer():
+    async def predicate(ctx):
+        devrole = ctx.guild.get_role(1033815896197709855)
+        return devrole in ctx.author.roles
+    return commands.check(predicate)
+
+
+
+@bot.slash_command()
+@is_developer()
+async def server_message(ctx: discord.ApplicationContext, *, message: str):
+    response = await servermsg(message)
+    print(response)
+    await ctx.respond(f'{response}', ephemeral=True)
+
 
 @restart_warning.before_loop
 async def before_warning():
