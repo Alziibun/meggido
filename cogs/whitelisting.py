@@ -47,9 +47,11 @@ class Whitelist(commands.Cog):
                               port=int(os.getenv('RCON_PORT')),
                               passwd=os.getenv('RCON_PASSWORD')
                               )
-        await ctx.defer()
         print(response)
-        await ctx.send_followup(response, ephemeral=True)
+        if 'exist' in response:
+            await ctx.respond('That username already exists!', ephemeral=True)
+        else:
+            await ctx.respond(f"Username: `{username if username is not None else user.name}`\nPassword: `{password}`", ephemeral=True)
 
     @wl.command(name='remove')
     async def wl_remove(self, ctx: discord.ApplicationContext, username: str):
