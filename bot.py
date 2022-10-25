@@ -5,6 +5,7 @@ from rcon.source import rcon
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from discord.ext import commands, tasks
+from discord.commands import SlashCommandGroup
 
 load_dotenv(override=True)
 intents = discord.Intents.default()
@@ -56,12 +57,23 @@ def is_developer():
 
 
 
-@bot.slash_command()
-@is_developer()
+@srv.command(name='message', description='Sends a server message to the server.')
 async def server_message(ctx: discord.ApplicationContext, *, message: str):
     response = await servermsg(message)
     print(response)
     await ctx.respond(f'{response}', ephemeral=True)
+
+@srv.command(name='save', description='Commands the server to save the world.')
+async def server_save(ctx: discord.ApplicationContext):
+    response = await rcon('save', host=os.getenv('RCON_HOST'), port=os.getenv('RCON_PORT'), passwd=os.getenv('RCON_PASSWORD'))
+    print(response)
+    await ctx.respond(f"{response}", ephemeral=False)
+
+@srv.command(name='reload', description='Reloads the server options.  This allows you to change settings without requiring a restart')
+async def server_reloadoptions(ctx: discord.ApplicationContext):
+    response = await rcon('reloadoptions', host=os.getenv('RCON_HOST'), port=os.getenv('RCON_PORT'), passwd=os.getenv('RCON_PASSWORD'))
+    print(response)
+    await ctx.respond(f"{response}")
 
 
 @restart_warning.before_loop
