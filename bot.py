@@ -49,11 +49,6 @@ async def restart_warning():
             break
     print('loop finished.  next restart:', next_restart)
 
-def is_developer():
-    async def predicate(ctx):
-        devrole = ctx.guild.get_role(1033815896197709855)
-        return devrole in ctx.author.roles
-    return commands.check(predicate)
 
 
 
