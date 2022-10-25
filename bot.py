@@ -83,13 +83,12 @@ async def before_warning():
 restart_warning.start()
 
 if __name__ == "__main__":
-    # dir = os.path.dirname(__file__)
-    # cogs = os.path.join(dir,'/cogs')
-    # for ex in os.listdir(cogs):
-    #     try:
-    #         bot.load_extension(ex)
-    #         print(ex, 'loaded.')
-    #     except Exception as e:
-    #         exc = "{}: {}".format(type(e).__name__, e)
-    #         print('Failed to load extension {}\n{}'.format(ex, exc))
+    for ex in os.listdir(os.getcwd() + '\\cogs'):
+        try:
+            ex = ex.split('.')[0]
+            bot.load_extension(f"cogs.{ex}")
+            print(ex, 'loaded.')
+        except Exception as e:
+            exc = "{}: {}".format(type(e).__name__, e)
+            print('Failed to load extension {}\n{}'.format(ex, exc))
     bot.run(os.getenv("BOT_TOKEN"))
