@@ -30,17 +30,20 @@ async def servermsg(message: str):
 @tasks.loop(minutes=1)
 async def restart_warning():
     now = datetime.now(timezone.utc)
-    delta = now.hour // 6 + 1
+    delta = now.hour // 6
     print('delta is', delta)
-    next_restart = datetime(now.year, now.month, now.day, hour=6 * delta, tzinfo=timezone.utc)
-    print(now.replace(microsecond=0))
-    until = next_restart - now.replace(microsecond=0)
-    times = [30, 10, 5, 1]
-    print(until)
+    next_restart = datetime(now.year, now.month, now.day, hour=6, tzinfo=timezone.utc)
+    if now.hour >= 6:
+        next_restart += timedelta(hours=6 * delta)
+    print(next_restart, now.replace(second=0, microsecond=0))
+    until = next_restart - now.replace(second=0, microsecond=0)
+    times = [30, 15, 12, 11, 10, 5, 1]
+    print('Time until restart', until)
+    if until.seconds == times[0] * 60:
+        await chat.send(f"**Server restart <t:{int(next_restart.timestamp())}:R>!**")
     for minutes in times:
-        print(until.seconds, minutes * 60)
+        print(until.seconds, minutes * 60 )
         if until.seconds == minutes * 60:
-            await chat.send(f"**Server restart <t:{int(next_restart.timestamp())}:R>!**")
             await servermsg(f"The server will restart in {minutes} minute(s)!")
             break
     print('loop finished.  next restart:', next_restart)
