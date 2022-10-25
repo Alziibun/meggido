@@ -49,8 +49,7 @@ async def restart_warning():
             break
     print('loop finished.  next restart:', next_restart)
 
-
-
+srv = bot.create_group('server', 'Administrative RCON commands to communicate to the server.')
 
 @srv.command(name='message', description='Sends a server message to the server.')
 async def server_message(ctx: discord.ApplicationContext, *, message: str):
