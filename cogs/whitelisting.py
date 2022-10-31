@@ -13,6 +13,8 @@ from discord.ext import commands, tasks
 from discord.commands import SlashCommandGroup
 from discord import option
 
+
+
 class Whitelist(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
