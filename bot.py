@@ -42,6 +42,7 @@ async def restart_warning():
     tz = pytz.timezone('Europe/London')
     now = pytz.utc.localize(datetime.utcnow())
     dst = int(now.astimezone(tz).dst() != timedelta(0))
+    await create_listing()
 
     now = datetime.now(tz)
     delta = (now.hour - int(not dst))// 6
@@ -91,6 +92,8 @@ async def server_reloadoptions(ctx: discord.ApplicationContext):
 @restart_warning.before_loop
 async def before_warning():
     await bot.wait_until_ready()
+    chan: discord.TextChannel = server.get_channel(1036141105697271858)
+    await chan.purge()
     now = datetime.utcnow()
     future = now.replace(second=0, microsecond=0) + timedelta(minutes=1)
     until = future - now.replace(microsecond=0)
@@ -138,17 +141,43 @@ async def get_players():
     names = [name[1:] for name in lines[1:]]
     players = []
     for member in server.members:
-        if name := member.display_name.split('|').strip() in names:
+        name = member.display_name.split('|')[0].strip()
+        if name in names:
             players.append((name, member))
     return players
 
+async def online_embed(member: discord.Member):
+    embed = discord.Embed(color=member.top_role.color)
+    embed.set_author(name=member.display_name.split('|')[0].strip(), icon_url=member.display_avatar)
+    return embed
+
+listing = {}
 async def create_listing():
-    chan = server.get_channel(1036141105697271858)
+    chan: discord.TextChannel = server.get_channel(1036141105697271858)
+    players = await get_players()
+    print([name for name, member in players])
+    print(list(listing.keys()))
+    if [name for name, member in players] != list(listing.keys()):
+        woosh = list(listing.items())
+        for name, msg in woosh:
+            print(name)
+            if name not in [name for name, member in players]:
+                await msg.delete()
+                del listing[name]
+    for name, member in players:
+        if name not in listing.keys():
+            msg = await chan.send(embed=await online_embed(member))
+            listing.update({name : msg})
+
+
+
+
+
 
 @bot.slash_command()
 async def players(ctx):
-    response = get_players()
-    await ctx.respond(response)
+    await create_listing()
+    await ctx.respond('test')
 
 if __name__ == "__main__":
     for ex in os.listdir(os.getcwd() + '\\cogs'):
