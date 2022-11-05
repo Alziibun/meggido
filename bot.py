@@ -32,6 +32,11 @@ async def on_ready():
     chat = server.get_channel(chat)
     restart_warning.start()
 
+@bot.event
+async def on_member_join(member: discord.Member):
+    tourist = server.get_role(1036008791105355907)
+    await member.add_roles(tourist)
+
 async def servermsg(message: str):
     return await rcon('servermsg', f'"{message}"', host=os.getenv('RCON_HOST'), port=int(os.getenv('RCON_PORT')), passwd=os.getenv('RCON_PASSWORD'))
 async def worldsave():
@@ -142,7 +147,7 @@ async def get_players():
     players = []
     for member in server.members:
         name = member.display_name.split('|')[0].strip()
-        if name in names:
+        if name.lower() in [lname.lower() for lname in names]:
             players.append((name, member))
     return players
 
@@ -170,8 +175,31 @@ async def create_listing():
             listing.update({name : msg})
 
 
+replay = bot.create_group('replay', 'Record/Play a recording of player activity.')
 
+@replay.command(name='record')
+async def record_replay(ctx: discord.ApplicationContext, user: discord.Member):
+    response = await rcon('replay', f'"{user.display_name.split("|")[0].strip()}" -record', '~\\lol.bin',
+               host=os.getenv('RCON_HOST'),
+               port=int(os.getenv('RCON_PORT')),
+               passwd=os.getenv('RCON_PASSWORD'))
+    await ctx.respond(response)
 
+@replay.command(name='stop')
+async def record_stop(ctx: discord.ApplicationContext, user: discord.Member):
+    response = await rcon('replay', f'"{user.display_name.split("|")[0].strip()}" -stop', '~\\lol.bin',
+               host=os.getenv('RCON_HOST'),
+               port=int(os.getenv('RCON_PORT')),
+               passwd=os.getenv('RCON_PASSWORD'))
+    await ctx.respond(response)
+
+@replay.command(name='play')
+async def record_play(ctx: discord.ApplicationContext, user: discord.Member):
+    response = await rcon('replay', f'"{user.display_name.split("|")[0].strip()}" -play', '~\\lol.bin',
+               host=os.getenv('RCON_HOST'),
+               port=int(os.getenv('RCON_PORT')),
+               passwd=os.getenv('RCON_PASSWORD'))
+    await ctx.respond(response)
 
 
 @bot.slash_command()
