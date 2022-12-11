@@ -1,0 +1,21 @@
+- name: ssh deploy
+  # You may pin to the exact commit or the version.
+  # uses: easingthemes/ssh-deploy@f2f261e6bd55fc750ceb9b0b7e49ad0ef72a7780
+  uses: easingthemes/ssh-deploy@v3.0.1
+  with:
+    # Private Key
+    SSH_PRIVATE_KEY: 
+    # Remote host
+    REMOTE_HOST: 
+    # Remote user
+    REMOTE_USER: 
+    # Remote port
+    REMOTE_PORT: # optional, default is 22
+    # Source directory
+    SOURCE: # optional, default is 
+    # Target directory
+    TARGET: # optional, default is /home/REMOTE_USER/
+    # Arguments to pass to rsync
+    ARGS: # optional, default is -rltgoDzvO
+    # An array of folder to exclude
+    EXCLUDE: # optional, default is 
