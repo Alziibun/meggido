@@ -88,7 +88,7 @@ class ServerManagement(commands.Cog):
         print('Sleeping for', until.total_seconds(), 'seconds')
         await asyncio.sleep(until.total_seconds())
 
-    @tasks.loop(seconds=0.1)
+    @tasks.loop(seconds=1)
     async def stdout_monitor(self):
         line = await Server.process.stdout.readline()
         print(f'[SERVER] {line.strip()}')
