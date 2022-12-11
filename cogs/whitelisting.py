@@ -6,6 +6,7 @@ import secrets
 import string
 import sqlite3
 import database as db
+import re
 from ftplib import FTP
 from rcon.source import rcon
 from datetime import datetime, timedelta, timezone
@@ -69,6 +70,26 @@ async def denizen(user: discord.Member, username: str):
     await user.remove_roles(tour)
     await user.edit(nick=f"{username} | Denizen")
 
+def check_name(username: str):
+    username = username.replace(' ', '_')
+    print(re.sub(r'[^A-Za-z0-9-_]', '', username))
+    return re.sub(r'[^A-Za-z0-9-_]', '', username) != username
+
+class EditApplication(discord.ui.Modal):
+    def __init__(self, member: discord.Member, message: discord.Message,  username: str, note: str="", *args, **kwargs):
+        super().__init__(title="Edit Application", *args, **kwargs)
+        self.member = member
+        self.note = note
+        self.message = message
+        self.add_item(discord.ui.InputText(label='Username', min_length=3, max_length=32, required=True, value=username))
+
+    async def callback(self, interaction: discord.Interaction):
+        name = self.children[0].value
+        if check_name(name):
+            raise Exception('Name contains invalid characters.')
+        await self.message.edit(embed=application_embed(member=self.member, username=name, note=self.note), view=WLRequestControls(member=self.member, username=name))
+        await interaction.response.send_message("Application edited", ephemeral=True)
+
 
 class Application(discord.ui.Modal):
     def __init__(self, member: discord.Member, *args, **kwargs):
@@ -77,30 +98,34 @@ class Application(discord.ui.Modal):
         self.add_item(discord.ui.InputText(label='Note (optional)', style=discord.InputTextStyle.long, required=False))
 
     async def callback(self, interaction: discord.Interaction):
-        name = self.children[0].value
+        name = self.children[0].value.replace(' ', '_')
         note = self.children[1].value
         print(note)
+        if check_name(name):
+            raise Exception('death')
         chan = interaction.guild.get_channel(1037514532639215626)
         await chan.send(embed = application_embed(interaction.user, username=name, note=note), view = WLRequestControls(interaction.user))
         await interaction.response.send_message('Application sent successfully.', ephemeral=True)
 
 class WLRequestControls(discord.ui.View):
-    def __init__(self, member: discord.Member, *args, **kwargs):
+    def __init__(self, member: discord.Member, username: str="", note: str="", *args, **kwargs):
         self.member = member
+        self.username = username
+        self.note = note
         print(member.name)
         super().__init__(timeout=None, *args, **kwargs)
 
     @discord.ui.button(label='Accept', custom_id='a1', style=discord.ButtonStyle.success)
     async def accept_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
         print(self.member)
+        await interaction.response.defer()
         try:
-            user, pw = await adduser(self.member.name)
+            user, pw = await adduser(self.member.name if not self.username else self.username)
         except IndexError:
             return await interaction.response.send_message('You\'re already whitelisted!')
         dm = await self.member.create_dm()
         await interaction.message.delete()
         await dm.send(embed=credential_embed(user, pw, interaction.user))
-        await interaction.response.send_message("Whitelist accepted.  Login credentials sent to user.", ephemeral=True)
         await denizen(self.member, user)
         await interaction.message.delete()
 
@@ -108,6 +133,10 @@ class WLRequestControls(discord.ui.View):
     async def deny_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
         await interaction.message.delete()
         await interaction.response.send_message("Whitelist request denied", ephemeral=True)
+
+    @discord.ui.button(label='Edit', custom_id='e1')
+    async def edit_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+        await interaction.response.send_modal(EditApplication(member=self.member, message=interaction.message, username=self.username, note=self.note))
 
 async def can_dm_user(user: discord.User) -> bool:
     ch = user.dm_channel

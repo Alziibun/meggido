@@ -1,9 +1,8 @@
 import discord
 import os
 import asyncio
-
 import pytz
-
+from ext.server import Server
 import database as db
 from discord import option
 from rcon.source import rcon, Client
@@ -11,7 +10,6 @@ from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from discord.ext import commands, tasks
 from discord.commands import SlashCommandGroup
-
 
 load_dotenv(override=True)
 intents = discord.Intents.default()
@@ -27,6 +25,9 @@ server = 1029286298156011600
 @bot.event
 async def on_ready():
     print('Logged on as {0}!'.format(bot.user))
+    print('Starting Project Zomboid server')
+    await Server.start()
+    print('Server started')
     global server, chat
     server = bot.get_guild(server)
     chat = server.get_channel(chat)
@@ -42,44 +43,46 @@ async def servermsg(message: str):
 async def worldsave():
     return await rcon('save', host=os.getenv('RCON_HOST'), port=os.getenv('RCON_PORT'), passwd=os.getenv('RCON_PASSWORD'))
 
+@bot.slash_command()
+async def when_restart(ctx):
+    when, until = get_restart()
+    await ctx.respond(f"**Server restart <t:{int(when.timestamp())}:R>!**")
+
+def get_restart():
+    server_tz = pytz.timezone('Europe/London')
+    utc_time = pytz.utc.localize(datetime.utcnow())
+    now = server_tz.normalize(utc_time.astimezone(server_tz))
+    dst = int(now.astimezone(server_tz).dst() != timedelta(0))
+    delta = (now.hour - int(not dst)) // 6
+
+    print('delta is', delta)
+    next_restart = server_tz.normalize(datetime(now.year, now.month, now.day, hour=1 - dst, tzinfo=now.tzinfo))
+    print(6 * delta + 7 - dst, "hours")
+    if now.hour >= 1:
+        print(timedelta(hours=6 * delta + 6 + dst))
+        next_restart += timedelta(hours=6 * delta + 6 + dst)
+    return next_restart, next_restart - now.replace(second=0, microsecond=0)
+
 @tasks.loop(minutes=1)
 async def restart_warning():
-    tz = pytz.timezone('Europe/London')
-    now = pytz.utc.localize(datetime.utcnow())
-    dst = int(now.astimezone(tz).dst() != timedelta(0))
     await create_listing()
-
-    now = datetime.now(tz)
-    delta = (now.hour - int(not dst))// 6
-    print(int(not dst))
-    print('delta is', delta)
-    print('daylight savings', dst)
-    next_restart = datetime(now.year, now.month, now.day, hour=1 - dst, tzinfo=tz)
-    print(6*delta + 7 - dst)
-    if now.hour >= 1 - dst:
-        next_restart += timedelta(hours=6 * delta + 6 - dst)
-    print(next_restart, now.replace(second=0, microsecond=0))
-    until = next_restart - now.replace(second=0, microsecond=0)
+    when, until = get_restart()
     times = [30, 15, 10, 5, 3, 1]
     print('Time until restart', until)
     if until.seconds == times[0] * 60:
-        await chat.send(f"**Server restart <t:{int(next_restart.timestamp())}:R>!**")
-    if until.seconds == 60:
-        await worldsave()
+        await chat.send(f"**Server restart <t:{int(when.timestamp())}:R>!**")
     for minutes in times:
-        print(until.seconds, minutes * 60 )
         if until.seconds == minutes * 60:
-            await servermsg(f"The server will restart in {minutes} minute(s)!")
+            await Server.message(f"The server will restart in {minutes} minute(s)!")
             break
-    print('loop finished.  next restart:', next_restart)
+    print('loop finished.  next restart:', when)
 
 srv = bot.create_group('server', 'Administrative RCON commands to communicate to the server.')
 
 @srv.command(name='message', description='Sends a server message to the server.')
 async def server_message(ctx: discord.ApplicationContext, *, message: str):
-    response = await servermsg(message)
-    print(response)
-    await ctx.respond(f'{response}', ephemeral=True)
+    await Server.message(message)
+    await ctx.respond(f'sent', ephemeral=True)
 
 @srv.command(name='save', description='Commands the server to save the world.')
 async def server_save(ctx: discord.ApplicationContext):
@@ -89,7 +92,13 @@ async def server_save(ctx: discord.ApplicationContext):
 
 @srv.command(name='reload', description='Reloads the server options.  This allows you to change settings without requiring a restart')
 async def server_reloadoptions(ctx: discord.ApplicationContext):
-    response = await rcon('reloadoptions', host=os.getenv('RCON_HOST'), port=os.getenv('RCON_PORT'), passwd=os.getenv('RCON_PASSWORD'))
+    response = await rcon('reloadoptions', host=os.getenv('RCON_HOST'), port=int(os.getenv('RCON_PORT')), passwd=os.getenv('RCON_PASSWORD'))
+    print(response)
+    await ctx.respond(f"{response}")
+
+@srv.command(name='shutdown')
+async def server_shutdown(ctx: discord.ApplicationContext):
+    response = await rcon('quit', host=os.getenv('RCON_HOST'), port=int(os.getenv('RCON_PORT')), passwd=os.getenv('RCON_PASSWORD'))
     print(response)
     await ctx.respond(f"{response}")
 
@@ -101,7 +110,7 @@ async def before_warning():
     await chan.purge()
     now = datetime.utcnow()
     future = now.replace(second=0, microsecond=0) + timedelta(minutes=1)
-    until = future - now.replace(microsecond=0)
+    until = future - now.replace(second=0, microsecond=0)
     print('Sleeping for', until.total_seconds(), 'seconds')
     await asyncio.sleep(until.total_seconds())
 
@@ -159,7 +168,11 @@ async def online_embed(member: discord.Member):
 listing = {}
 async def create_listing():
     chan: discord.TextChannel = server.get_channel(1036141105697271858)
-    players = await get_players()
+    try:
+        players = await get_players()
+    except Exception as e:
+        print("Couldn't get players\n",e)
+        return
     print([name for name, member in players])
     print(list(listing.keys()))
     if [name for name, member in players] != list(listing.keys()):
@@ -173,34 +186,7 @@ async def create_listing():
         if name not in listing.keys():
             msg = await chan.send(embed=await online_embed(member))
             listing.update({name : msg})
-
-
 replay = bot.create_group('replay', 'Record/Play a recording of player activity.')
-
-@replay.command(name='record')
-async def record_replay(ctx: discord.ApplicationContext, user: discord.Member):
-    response = await rcon('replay', f'"{user.display_name.split("|")[0].strip()}" -record', '~\\lol.bin',
-               host=os.getenv('RCON_HOST'),
-               port=int(os.getenv('RCON_PORT')),
-               passwd=os.getenv('RCON_PASSWORD'))
-    await ctx.respond(response)
-
-@replay.command(name='stop')
-async def record_stop(ctx: discord.ApplicationContext, user: discord.Member):
-    response = await rcon('replay', f'"{user.display_name.split("|")[0].strip()}" -stop', '~\\lol.bin',
-               host=os.getenv('RCON_HOST'),
-               port=int(os.getenv('RCON_PORT')),
-               passwd=os.getenv('RCON_PASSWORD'))
-    await ctx.respond(response)
-
-@replay.command(name='play')
-async def record_play(ctx: discord.ApplicationContext, user: discord.Member):
-    response = await rcon('replay', f'"{user.display_name.split("|")[0].strip()}" -play', '~\\lol.bin',
-               host=os.getenv('RCON_HOST'),
-               port=int(os.getenv('RCON_PORT')),
-               passwd=os.getenv('RCON_PASSWORD'))
-    await ctx.respond(response)
-
 
 @bot.slash_command()
 async def players(ctx):
