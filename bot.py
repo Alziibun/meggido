@@ -27,7 +27,8 @@ server = 1029286298156011600
 async def on_ready():
     print('Logged on as {0}!'.format(bot.user))
     print('Starting Project Zomboid server')
-    await Server.start()
+    loop = asyncio.get_running_loop()
+    loop.run_until_complete(Server.start())
     print('Server started')
     await Perdition.init(bot)
 
