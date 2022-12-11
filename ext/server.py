@@ -9,14 +9,16 @@ class Server:
 
     @classmethod
     async def start(cls):
+        print("Starting process")
         cls.process = await asyncio.create_subprocess_shell(
             "bash /opt/pzserver/start-server.sh",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             stdin=asyncio.subprocess.PIPE,
         )
-
+        print("Shell started")
         stdout, stderr = await cls.process.communicate()
+        print("Commune passed.")
         if stdout:
             print(f"[SERVER] {stdout.decode()}")
         if stderr:
