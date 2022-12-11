@@ -90,7 +90,8 @@ class ServerManagement(commands.Cog):
 
     @tasks.loop(seconds=0.1)
     async def stdout_monitor(self):
-        print(f'[SERVER] {Server.process.stdout.readline().strip()}')
+        line = await Server.process.stdout.readline()
+        print(f'[SERVER] {line.strip()}')
 
     @stdout_monitor.before_loop
     async def before_stdout_monitor(self):
