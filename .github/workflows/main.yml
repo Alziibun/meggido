@@ -1,21 +1,28 @@
-- name: ssh deploy
-  # You may pin to the exact commit or the version.
-  # uses: easingthemes/ssh-deploy@f2f261e6bd55fc750ceb9b0b7e49ad0ef72a7780
-  uses: easingthemes/ssh-deploy@v3.0.1
-  with:
-    # Private Key
-    SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-    # Remote host
-    REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-    # Remote user
-    REMOTE_USER: ${{ secrets.REMOTE_USER }}
-    # Remote port
-    REMOTE_PORT: # optional, default is 22
-    # Source directory
-    SOURCE: # optional, default is 
-    # Target directory
-    TARGET: /home/pzuser/Zomboid/bot
-    # Arguments to pass to rsync
-    ARGS: # optional, default is -rltgoDzvO
-    # An array of folder to exclude
-    EXCLUDE: # optional, default is 
+name: Node CI
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: '10.x'
+    - name: Install npm dependencies
+      run: npm install
+    - name: Run build task
+      run: npm run build --if-present
+    - name: Deploy to Server
+      uses: easingthemes/ssh-deploy@main
+      env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ARGS: "-rltgoDzvO --delete"
+          SOURCE: "dist/"
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          TARGET: ${{ secrets.REMOTE_TARGET }}
+          EXCLUDE: "/dist/, /node_modules/"
