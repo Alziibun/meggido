@@ -18,10 +18,6 @@ def get_server_time():
 def is_dst():
     return get_server_time().astimezone(server_tz).dst() != timedelta(0)
 
-async def wait_until_server():
-    while Server.process == None:
-        await asyncio.sleep(1)
-
 def get_restart():
     now = get_server_time()
     dst = int(is_dst())
@@ -99,5 +95,6 @@ class ServerManagement(commands.Cog):
     @stdout_monitor.before_loop
     async def before_stdout_monitor(self):
         await self.bot.wait_until_ready()
+        await Server.wait_until_ready()
 def setup(bot):
     bot.add_cog(ServerManagement(bot))

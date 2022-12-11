@@ -25,6 +25,11 @@ class Server:
             print(f"[ERROR] {stdout.decode()}")
 
     @classmethod
+    async def wait_until_ready(cls):
+        while cls.process == None:
+            await asyncio.sleep(1)
+
+    @classmethod
     async def send(cls, cmd):
         stdout, stderr = await cls.process.communicate(input=cmd)
         if stdout:
