@@ -68,6 +68,8 @@ async def create_listing():
 class ServerManagement(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.restart_manager.start()
+        self.stdout_monitor.start()
 
     @tasks.loop(seconds=1)
     async def restart_manager(self):
@@ -86,5 +88,12 @@ class ServerManagement(commands.Cog):
         print('Sleeping for', until.total_seconds(), 'seconds')
         await asyncio.sleep(until.total_seconds())
 
+    @tasks.loop(seconds=0.1)
+    async def stdout_monitor(self):
+        print(f'[SERVER] {Server.process.stdout.readline().strip()}')
+
+    @stdout_monitor.before_loop
+    async def before_stdout_monitor(self):
+        await self.bot.wait_until_ready()
 def setup(bot):
     bot.add_cog(ServerManagement(bot))
