@@ -69,7 +69,7 @@ class ServerManagement(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.restart_manager.start()
-        self.stdout_monitor.start()
+        #self.stdout_monitor.start()
 
     @tasks.loop(seconds=1)
     async def restart_manager(self):
