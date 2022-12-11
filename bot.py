@@ -75,7 +75,7 @@ async def commit_to_db(ctx, *, query):
         await ctx.respond(f'Commit failed.\nError: {e}')
 
 if __name__ == "__main__":
-    for ex in os.listdir(os.getcwd() + '\\cogs'):
+    for ex in os.listdir(os.getcwd() + '/cogs'):
         try:
             ex = ex.split('.')[0]
             bot.load_extension(f"cogs.{ex}")
