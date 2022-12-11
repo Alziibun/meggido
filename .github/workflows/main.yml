@@ -1,28 +1,38 @@
-name: Node CI
-on: [push]
-
+name: CI-SFTP
+ 
+# Controls when the action will run. 
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ main ]
+#  pull_request:
+#    branches: [ main ]
+ 
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+ 
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  build:
-
+  # This workflow contains a single job called "SFTP"
+  deploy-via-sftp:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v1
-    - name: Install Node.js
-      uses: actions/setup-node@v1
-      with:
-        node-version: '10.x'
-    - name: Install npm dependencies
-      run: npm install
-    - name: Run build task
-      run: npm run build --if-present
-    - name: Deploy to Server
-      uses: easingthemes/ssh-deploy@main
-      env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          ARGS: "-rltgoDzvO --delete"
-          SOURCE: "dist/"
-          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-          REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          TARGET: ${{ secrets.REMOTE_TARGET }}
-          EXCLUDE: "/dist/, /node_modules/"
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+          
+      - name: SFTP Deploy
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.1
+        with:
+          username: ${{ secrets.SSH_REMOTE_USER }}
+          server: ${{ secrets.SSH_REMOTE_HOST }}
+          port: 22 # default is 22
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+ 
+          
+          # will put all file under this path
+          local_path: ./* # default is ./*
+          # files will copy to under remote_path
+          remote_path: /home/pzuser/Zomboid/bot
+          
+          # sftp args
+          args: '-o ConnectTimeout=5'
