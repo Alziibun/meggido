@@ -4,17 +4,17 @@
   uses: easingthemes/ssh-deploy@v3.0.1
   with:
     # Private Key
-    SSH_PRIVATE_KEY: 
+    SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
     # Remote host
-    REMOTE_HOST: 
+    REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
     # Remote user
-    REMOTE_USER: 
+    REMOTE_USER: ${{ secrets.REMOTE_USER }}
     # Remote port
     REMOTE_PORT: # optional, default is 22
     # Source directory
     SOURCE: # optional, default is 
     # Target directory
-    TARGET: # optional, default is /home/REMOTE_USER/
+    TARGET: /home/pzuser/Zomboid/bot
     # Arguments to pass to rsync
     ARGS: # optional, default is -rltgoDzvO
     # An array of folder to exclude
