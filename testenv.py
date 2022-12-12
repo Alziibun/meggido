@@ -1,9 +1,17 @@
 #!/usr/bin/env python
 import os
 import sys
+import threading
 
-while True:
-    data = sys.stdin.readline()
-    if len(data):
-        print("[BASH]", data)
-        os.system("echo Y")
+class BashThread(threading.Thread):
+    def __init__(self, name='bash-thread'):
+        super().__init__(name=name)
+        self.start()
+
+    def run(self):
+        os.system("bash testpiper.sh")
+
+def callback(inp):
+    print("Entered: ")
+
+BashThread().run()
