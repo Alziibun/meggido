@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
-echo "one"
-echo "two"
-echo "three"
-echo "woohoo"
+echo "awaiting input"
+while [ true ] ; do
+  read -t 3 -n 1
+  if [ $? = 0 ] ; then
+    exit ;
+  else
+    echo "awaiting input"
+  fi
+done
