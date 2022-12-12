@@ -6,4 +6,4 @@ while True:
     data = sys.stdin.readline()
     if len(data):
         print("[BASH]", data)
-        os.system("Y")
+        os.system("echo Y")
