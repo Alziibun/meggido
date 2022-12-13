@@ -9,7 +9,7 @@ class BashThread(threading.Thread):
         self.start()
 
     def run(self):
-        os.system("bash testpiper.sh")
+        os.system("bash /opt/pzserver/start-server.sh")
 
 def callback(inp):
     print("Entered: ")
