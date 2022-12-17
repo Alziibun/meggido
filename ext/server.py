@@ -42,7 +42,7 @@ def quit_server():
     send('quit')
 
 def start_server():
-    command("bash", "/opt/pzserver/start-server.sh")
+    command("exec bash", "/opt/pzserver/start-server.sh")
 
 def restart_server():
     quit_server()
