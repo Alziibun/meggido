@@ -4,6 +4,7 @@ import asyncio
 from datetime import datetime, timedelta
 import ext.server as server
 from discord.ext import commands, tasks
+from discord.commands import SlashCommandGroup
 from ext.perdition import Perdition
 
 restart_interval = 6 # in hours
@@ -69,6 +70,13 @@ class ServerManagement(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.restart_manager.start()
+
+    srv = SlashCommandGroup("server", "server control commands")
+
+    @srv.command()
+    async def restart(self, ctx: discord.ApplicationContext):
+        server.restart_server()
+        await ctx.respond("Server is restarting")
 
     @tasks.loop(seconds=1)
     async def restart_manager(self):
