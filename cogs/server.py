@@ -81,6 +81,10 @@ class ServerManagement(commands.Cog):
     @tasks.loop(seconds=1)
     async def restart_manager(self):
         next_restart, until = get_restart()
+        for time in warnings:
+            if until.seconds == time * 60:
+                server.message(f"The server will restart in {time * 60} minutes")
+                break
         if until.seconds == warnings[0] * 60:
             await Perdition.channels["restart warnings"].send(f"**Server restart <t:{int(next_restart.timestamp())}:R>!**")
         if until.seconds <= 5:

@@ -35,6 +35,9 @@ def command(cmd, args):
 def send(*args):
     command("stuff", f"\'{' '.join(args)}\'^M")
 
+def message(msg):
+    send("servermsg", f'"{msg}"')
+
 def quit_server():
     send('quit')
 
