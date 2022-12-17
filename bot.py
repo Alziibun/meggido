@@ -3,7 +3,6 @@ import os
 import asyncio
 import pytz
 from ext.perdition import Perdition
-from ext.server import Server
 import database as db
 from discord import option
 from rcon.source import rcon, Client
@@ -27,7 +26,6 @@ server = 1029286298156011600
 async def on_ready():
     print('Logged on as {0}!'.format(bot.user))
     print('Starting Project Zomboid server')
-    await Server.start()
     print('Server started')
     await Perdition.init(bot)
 

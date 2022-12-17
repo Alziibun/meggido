@@ -1,50 +1,46 @@
 import discord
 import asyncio
+import os, sys
+from typing import List
 import subprocess
 
-start_file = "/opt/pzserver/start-server.sh"
+session_name = 'pz'
 
-class Server:
-    process = None
+def get_active_screens() -> List[str]:
+    result = subprocess.run(['screen', '-ls'], stdout=subprocess.PIPE)
+    output = result.stdout.decode()
+    if "No sockets found" in output:
+        return []
+    assert "There is a screen on" in output
 
-    @classmethod
-    async def start(cls):
-        print("Starting process")
-        cls.process = await asyncio.create_subprocess_shell(
-            "bash /opt/pzserver/start-server.sh",
-            stdin=asyncio.subprocess.PIPE,
-        )
-        print("Shell started")
-        print("Commune passed.")
+    lines = []
+    for line in output.splitlines():
+        if line.startswith('\t'):
+            lines.append(line)
 
-    @classmethod
-    async def wait_until_ready(cls):
-        while cls.process == None:
-            await asyncio.sleep(1)
+    session_names = []
+    for line in lines:
+        line = line.strip()
+        line = line.split('\t')[0]
+        line = line.split('.')[1]
+        session_names.append(line)
+    return session_names
 
-    @classmethod
-    async def send(cls, cmd):
-        stdout, stderr = await cls.process.communicate(input=cmd)
-        if stdout:
-            print(f"[SERVER] {stdout.decode()}")
-        if stderr:
-            print(f"[ERROR] {stdout.decode()}")
+def start_screen():
+    subprocess.run(['screen', '-d', '-m', '-S', session_name])
 
-    @classmethod
-    async def message(cls, message):
-        await cls.send(f"servermsg \"{message}\"")
+def command(cmd, args):
+    subprocess.run(['screen', '-S', session_name, '-p 0', '-X', cmd, args])
 
-    @classmethod
-    async def adduser(cls, username, password):
-        await cls.send(f"adduser \"{username}\" \"{password}\"")
+def send(*args):
+    command("stuff", f"\'{' '.join(args)}\'^M")
 
-    @classmethod
-    async def stop(cls):
-        await cls.send(f"quit")
+def quit_server():
+    send('quit')
 
-    @classmethod
-    async def restart(cls):
-        await cls.stop()
-        while cls.process.returncode == None:
-            pass
-        await cls.start()
+def start_server():
+    command("bash", "/opt/pzserver/start-server.sh")
+
+def restart_server():
+    quit_server()
+    start_server()

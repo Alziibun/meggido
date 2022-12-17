@@ -2,7 +2,7 @@ import discord
 import pytz
 import asyncio
 from datetime import datetime, timedelta
-from ext.server import Server
+import ext.server as server
 from discord.ext import commands, tasks
 from ext.perdition import Perdition
 
@@ -69,33 +69,26 @@ class ServerManagement(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.restart_manager.start()
-        #self.stdout_monitor.start()
 
     @tasks.loop(seconds=1)
     async def restart_manager(self):
         next_restart, until = get_restart()
         if until.seconds == warnings[0] * 60:
             await Perdition.channels["restart warnings"].send(f"**Server restart <t:{int(next_restart.timestamp())}:R>!**")
+        if until.seconds <= 5:
+            await asyncio.sleep(until.seconds)
+            server.restart_server()
+
 
     @restart_manager.before_loop
     async def before_warning(self):
         await self.bot.wait_until_ready()
-        chan: discord.TextChannel = Perdition.channels["player list"]
-        await chan.purge() # clean player list channel
+        #chan: discord.TextChannel = Perdition.channels["player list"]
+        #await chan.purge() # clean player list channel
         now = get_server_time()
         future = now.replace(microsecond=0) + timedelta(seconds=1)
         until = future - now.replace(microsecond=0)
         print('Sleeping for', until.total_seconds(), 'seconds')
         await asyncio.sleep(until.total_seconds())
-
-    @tasks.loop(seconds=1)
-    async def stdout_monitor(self):
-        line = await Server.process.stdin.readline()
-        print(f'[SERVER] {line.strip()}')
-
-    @stdout_monitor.before_loop
-    async def before_stdout_monitor(self):
-        await self.bot.wait_until_ready()
-        await Server.wait_until_ready()
 def setup(bot):
     bot.add_cog(ServerManagement(bot))
