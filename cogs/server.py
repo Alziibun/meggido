@@ -86,6 +86,7 @@ class ServerManagement(commands.Cog):
                 server.message(f"The server will restart in {time * 60} minutes")
                 break
         if until.seconds == warnings[0] * 60:
+            print(until.seconds)
             await Perdition.channels["restart warnings"].send(f"**Server restart <t:{int(next_restart.timestamp())}:R>!**")
         if until.seconds <= 5:
             await asyncio.sleep(until.seconds)

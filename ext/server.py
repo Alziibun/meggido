@@ -30,7 +30,7 @@ def start_screen():
     subprocess.run(['screen', '-d', '-m', '-S', session_name])
 
 def command(cmd, args):
-    subprocess.run(['screen', '-S', session_name, '-p 0', '-X', cmd, args])
+    subprocess.run(['screen', '-S', session_name, '-p', 'bash', '-X', cmd, args])
 
 def send(*args):
     command("stuff", f"\'{' '.join(args)}\'^M")
