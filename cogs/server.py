@@ -85,7 +85,7 @@ class ServerManagement(commands.Cog):
             if until.seconds == time * 60:
                 server.message(f"The server will restart in {time * 60} minutes")
                 break
-        if until.seconds == warnings[0] * 60:
+        if until.total_seconds() == warnings[0] * 60.0:
             print(until.seconds)
             await Perdition.channels["restart warnings"].send(f"**Server restart <t:{int(next_restart.timestamp())}:R>!**")
         if until.seconds <= 5:
