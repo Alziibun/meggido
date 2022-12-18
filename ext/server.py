@@ -26,6 +26,10 @@ def get_active_screens() -> List[str]:
         session_names.append(line)
     return session_names
 
+async def until_quit():
+    while "bash" in os.system(f"screen -S {session_name} -Q windows"):
+        await asyncio.sleep(1)
+
 def start_screen():
     subprocess.run(['screen', '-d', '-m', '-S', session_name])
 
@@ -38,12 +42,13 @@ def send(*args):
 def message(msg):
     send("servermsg", f'"{msg}"')
 
-def quit_server():
+def quit():
     send('quit')
 
-def start_server():
+def start():
     command("exec bash", "/opt/pzserver/start-server.sh")
 
-def restart_server():
-    quit_server()
-    start_server()
+async def restart():
+    quit()
+    await until_quit()
+    start()

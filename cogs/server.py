@@ -75,22 +75,22 @@ class ServerManagement(commands.Cog):
 
     @srv.command()
     async def restart(self, ctx: discord.ApplicationContext):
-        server.restart_server()
+        await server.restart()
         await ctx.respond("Server is restarting")
 
-    @tasks.loop(seconds=1)
+    @tasks.loop(minutes=1)
     async def restart_manager(self):
         next_restart, until = get_restart()
         for time in warnings:
             if until.seconds == time * 60:
                 server.message(f"The server will restart in {time * 60} minutes")
                 break
-        if until.total_seconds() == warnings[0] * 60.0:
+        if until.seconds == warnings[0] * 60.0:
             print(until.seconds)
             await Perdition.channels["restart warnings"].send(f"**Server restart <t:{int(next_restart.timestamp())}:R>!**")
-        if until.seconds <= 5:
+        if until.seconds <= warnings[-1] * 60:
             await asyncio.sleep(until.seconds)
-            server.restart_server()
+            await server.restart()
 
 
     @restart_manager.before_loop
