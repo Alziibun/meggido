@@ -27,7 +27,10 @@ def get_active_screens() -> List[str]:
     return session_names
 
 async def until_quit():
-    while "bash" in os.system(f"screen -S {session_name} -Q windows"):
+    output = "bash"
+    while "bash" in output:
+        result = subprocess.run(['screen', '-S', session_name, '-Q', 'windows'], stdout=subprocess.PIPE)
+        output = result.stdout.decode()
         await asyncio.sleep(1)
 
 def start_screen():
