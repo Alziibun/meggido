@@ -31,6 +31,7 @@ async def until_quit():
     while "bash" in output:
         result = subprocess.run(['screen', '-S', session_name, '-Q', 'windows'], stdout=subprocess.PIPE)
         output = result.stdout.decode()
+        print(output)
         await asyncio.sleep(1)
 
 def start_screen():
