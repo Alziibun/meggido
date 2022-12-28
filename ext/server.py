@@ -33,6 +33,8 @@ async def until_quit():
         output = result.stdout.decode()
         print(output)
         await asyncio.sleep(1)
+    else:
+        print("Window closed")
 
 def start_screen():
     subprocess.run(['screen', '-d', '-m', '-S', session_name])

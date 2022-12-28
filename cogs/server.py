@@ -75,6 +75,7 @@ class ServerManagement(commands.Cog):
 
     @srv.command()
     async def restart(self, ctx: discord.ApplicationContext):
+        await ctx.defer()
         await server.restart()
         await ctx.respond("Server is restarting")
 
