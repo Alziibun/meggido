@@ -31,4 +31,5 @@ def start():
 async def restart():
     quit()
     await until_quit()
+    await asyncio.sleep(5)
     start()
