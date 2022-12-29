@@ -82,7 +82,7 @@ class ServerManagement(commands.Cog):
     @srv.command()
     async def message(self, ctx: discord.ApplicationContext, msg: str):
         await ctx.defer()
-        await server.message(msg)
+        server.message(msg)
         await ctx.respond('Message sent!', ephemeral=True)
 
     @tasks.loop(minutes=1)
