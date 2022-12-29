@@ -44,6 +44,7 @@ def command(cmd, args):
 
 def send(*args):
     command("stuff", f"{' '.join(args)}^M")
+    command("stuff", "^D")
 
 def message(msg):
     send("servermsg", f'"{msg}"')
