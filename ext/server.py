@@ -26,7 +26,7 @@ def quit():
     command('quit')
 
 def start():
-    subprocess.run(['tmux', 'new-window', '-t', f'{session_name}:1', '-n', 'server', '"bash /opt/pzserver/start-server.sh"'])
+    os.system(f'tmux new-window -t {session_name}:1 -n server "bash /opt/pzserver/start-server.sh"')
 
 async def restart():
     quit()
