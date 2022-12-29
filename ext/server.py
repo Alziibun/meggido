@@ -16,17 +16,14 @@ async def until_quit():
     else:
         print("Window closed")
 
-def command(cmd, args):
-    os.system(f"tmux send -t {session_name}:1 {cmd} {args} ENTER")
-
-def send(*args):
-    command("stuff", f"{' '.join(args)}")
+def command(*args):
+    os.system(f"tmux send -t {session_name}:1 {' SPACE '.join(args)} ENTER")
 
 def message(msg):
-    send("servermsg", f'"{msg}"')
+    command("servermsg", f'"{msg}"')
 
 def quit():
-    send('quit')
+    command('quit')
 
 def start():
     subprocess.run(['tmux', 'new-window', '-t', f'{session_name}:1', '-n', 'server', '"bash /opt/pzserver/start-server.sh"'])
