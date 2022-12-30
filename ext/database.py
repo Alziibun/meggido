@@ -10,7 +10,7 @@ def connect(f):
     return wrapper
 
 @connect
-def get_user(con: sql.engine.Engine, name):
+def get_user(con: sql.engine.Engine, name: str=""):
     result = con.execute(sql.text(f'SELECT * FROM whitelist WHERE username = {name}'))
     return result.all()[0]  # return the first result
 
