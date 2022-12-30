@@ -106,7 +106,7 @@ class WLRequestControls(discord.ui.View):
         print(self.member)
         await interaction.response.defer()
         name = self.member.name if not self.username else self.username
-        if db.get_user(name):
+        if db.get_user(name=name):
             user, pw = await adduser(name)
         else:
             return await interaction.response.send_message('You\'re already whitelisted!')
@@ -143,7 +143,7 @@ class WhitelistRequest(discord.ui.View):
     async def callback(self, button: discord.ui.Button, interaction: discord.Interaction):
         if not await can_dm_user(interaction.user):
             return await interaction.response.send_message("Please enable DMs with this server in order to send an application.  You will be DMed your login details when accepted.", ephemeral=True)
-        if db.get_user(interaction.user.display_name.split('|')[0].strip()) is not None:
+        if db.get_user(name=interaction.user.display_name.split('|')[0].strip()) is not None:
             return await interaction.response.send_message("You're already whitelisted", ephemeral=True)
         await interaction.response.send_modal(Application(interaction.user))
 
