@@ -6,7 +6,8 @@ engine =  sql.create_engine(f"sqlite+pysqlite:////home/pzuser/Zomboid/db/{server
 def connect(f):
     def wrapper(*args, **kwargs):
         with engine.connect() as connection:
-            f(con=connection, *args, **kwargs)
+            result = f(con=connection, *args, **kwargs)
+            return result
     return wrapper
 
 @connect
