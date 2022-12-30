@@ -1,15 +1,8 @@
-import tempfile
 import discord
-import os
-import asyncio
-import secrets
-import string
-import sqlite3
-import database as db
-import re
-from ftplib import FTP
-from rcon.source import rcon
-from datetime import datetime, timedelta, timezone
+import os, re, string,secrets
+import ext.database as db
+import ext.server as server
+from ext.perdition import Perdition as perdition
 from dotenv import load_dotenv
 from discord.ext import commands, tasks
 from discord.commands import SlashCommandGroup
@@ -18,7 +11,6 @@ from discord import option
 
 load_dotenv(override=True)
 
-server = None
 
 
 def generate_password(pwd_length=8):
@@ -48,13 +40,7 @@ def application_embed(member: discord.Member, username: str=None, note: str=""):
     return embed
 
 async def adduser(username: str, password: str=generate_password()):
-    response = await rcon('adduser', f'"{username}"', f'"{password}"',
-                          host=os.getenv('RCON_HOST'),
-                          port=int(os.getenv('RCON_PORT')),
-                          passwd=os.getenv('RCON_PASSWORD')
-                          )
-    if 'exist' in response:
-        raise IndexError(response)
+    server.adduser(username, password)
     return username, password
 
 async def kickuser(username: str, reason: str=''):
@@ -64,8 +50,8 @@ async def banuser(username: str, reason: str=''):
     pass
 
 async def denizen(user: discord.Member, username: str):
-    den = server.get_role(1029288892270129153)
-    tour = server.get_role(1036008791105355907)
+    den = perdition.server.get_role(1029288892270129153)
+    tour = perdition.server.get_role(1036008791105355907)
     await user.add_roles(den)
     await user.remove_roles(tour)
     await user.edit(nick=f"{username} | Denizen")
@@ -119,9 +105,10 @@ class WLRequestControls(discord.ui.View):
     async def accept_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
         print(self.member)
         await interaction.response.defer()
-        try:
-            user, pw = await adduser(self.member.name if not self.username else self.username)
-        except IndexError:
+        name = self.member.name if not self.username else self.username
+        if db.get_user(name):
+            user, pw = await adduser(name)
+        else:
             return await interaction.response.send_message('You\'re already whitelisted!')
         dm = await self.member.create_dm()
         await interaction.message.delete()
@@ -156,8 +143,7 @@ class WhitelistRequest(discord.ui.View):
     async def callback(self, button: discord.ui.Button, interaction: discord.Interaction):
         if not await can_dm_user(interaction.user):
             return await interaction.response.send_message("Please enable DMs with this server in order to send an application.  You will be DMed your login details when accepted.", ephemeral=True)
-        db.fetch_serverdb()
-        if db.find('whitelist', 'username', interaction.user.display_name.split('|')[0].strip()) is not None:
+        if db.get_user(interaction.user.display_name.split('|')[0].strip()) is not None:
             return await interaction.response.send_message("You're already whitelisted", ephemeral=True)
         await interaction.response.send_modal(Application(interaction.user))
 
@@ -167,29 +153,6 @@ class Whitelist(commands.Cog):
 
     wl = SlashCommandGroup('whitelist', 'Manage server whitelist through RCON.')
 
-    @wl.command(name='add')
-    @option('user', description='The user to add to the whitelist.')
-    @option('username', description='The username for the player.  Leave this empty to use the discord name')
-    @option('password', description='Manually creates a password instead of having it generated automatically.')
-    async def wl_adduser(self, ctx: discord.ApplicationContext, user: discord.Member, username: str=None, password: str=generate_password()):
-        response = await adduser(username if username is not None else user.name, password)
-        print(response)
-        if 'exist' in response:
-            await ctx.respond('That username already exists!', ephemeral=True)
-        else:
-            await ctx.respond(f"Username: `{username if username is not None else user.name}`\nPassword: `{password}`", ephemeral=True)
-
-    @wl.command(name='remove')
-    async def wl_remove(self, ctx: discord.ApplicationContext, username: str):
-        response = await rcon('removeuserfromwhitelist', f'"{username}"',
-                              host=os.getenv('RCON_HOST'),
-                              port=int(os.getenv('RCON_PORT')),
-                              passwd=os.getenv('RCON_PASSWORD')
-                              )
-        await ctx.defer()
-        print(response)
-        await ctx.send_followup(response, ephemeral=True)
-
     @wl.command(name='spawn')
     async def wl_spawn(self, ctx: discord.ApplicationContext):
         await ctx.respond(view=WhitelistRequest())
@@ -197,8 +160,6 @@ class Whitelist(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self):
         self.bot.add_view(WhitelistRequest(), message_id=1037863899208368168)
-        global server
-        server = self.bot.get_guild(1029286298156011600)
 
 def setup(bot):
     bot.add_cog(Whitelist(bot))

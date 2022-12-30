@@ -1,10 +1,10 @@
-import discord
 import asyncio
-import os, sys
-from typing import List
+import os
 import subprocess
+import ext.database as db
 
 session_name = 'zomboid'
+
 
 async def until_quit():
     output = "server"
@@ -27,6 +27,10 @@ def quit():
 
 def start():
     os.system(f'tmux new-window -t {session_name}:1 -n server "bash /opt/pzserver/start-server.sh"')
+
+def adduser(username, password):
+    if not db.get_user(name=username):
+        command("adduser", f"\"{username}\"", f"\"{password}\"")
 
 async def restart():
     quit()

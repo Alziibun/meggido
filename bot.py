@@ -1,15 +1,9 @@
 import discord
 import os
 import asyncio
-import pytz
 from ext.perdition import Perdition
-import database as db
-from discord import option
-from rcon.source import rcon, Client
-from datetime import datetime, timedelta, timezone
+import ext.database as db
 from dotenv import load_dotenv
-from discord.ext import commands, tasks
-from discord.commands import SlashCommandGroup
 
 load_dotenv(override=True)
 intents = discord.Intents.default()
