@@ -11,8 +11,8 @@ def connect(f):
 
 @connect
 def get_user(con: sql.engine.Engine, *, name: str=""):
-    result = con.execute(sql.text(f'SELECT * FROM whitelist WHERE username = "{name}"'))
-    result = result.fetchone()
+    result = con.execute(sql.text(f'SELECT * FROM whitelist WHERE username = "{name}"')).fetchone()
+    if result is not None: result = result._asdict()
     print(result)
     return result  # return the first result
 
