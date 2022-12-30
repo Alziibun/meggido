@@ -12,6 +12,5 @@ def connect(f):
 @connect
 def get_user(con: sql.engine.Engine, *, name: str=""):
     result = con.execute(sql.text(f'SELECT * FROM whitelist WHERE username = "{name}"'))
-    print(result.fetchone())
     return result.fetchone()  # return the first result
 
