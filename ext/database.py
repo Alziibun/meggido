@@ -1,7 +1,7 @@
 import sqlalchemy as sql
 
 server_name = 'servertest'
-engine =  sql.create_engine(f"sqlite+pysqlite:////~/Zomboid/db/{server_name}.db", echo=True, future=True)
+engine =  sql.create_engine(f"sqlite+pysqlite:///Zomboid/db/{server_name}.db", echo=True, future=True)
 
 def connect(f):
     def wrapper(*args, **kwargs):
