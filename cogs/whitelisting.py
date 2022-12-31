@@ -106,15 +106,14 @@ class WLRequestControls(discord.ui.View):
         print(self.member)
         await interaction.response.defer()
         name = self.member.name if not self.username else self.username
-        if db.get_user(name=name):
+        if db.get_user(name=name) is None:
             user, pw = await adduser(name)
-        else:
-            return await interaction.response.send_message('You\'re already whitelisted!')
+        else: return
         dm = await self.member.create_dm()
         await interaction.message.delete()
         await dm.send(embed=credential_embed(user, pw, interaction.user))
         await denizen(self.member, user)
-        await interaction.message.delete()
+        await interaction.response.send_message(f"Application accepted for {name}.")
 
     @discord.ui.button(label='Deny', custom_id='d1', style=discord.ButtonStyle.red)
     async def deny_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
