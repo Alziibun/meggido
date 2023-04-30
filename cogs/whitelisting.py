@@ -80,7 +80,7 @@ class EditApplication(discord.ui.Modal):
 class Application(discord.ui.Modal):
     def __init__(self, member: discord.Member, *args, **kwargs):
         super().__init__(title="Whitelist Application", *args, **kwargs)
-        self.add_item(discord.ui.InputText(label='Username', min_length=3, max_length=32, required=True, value=member.name))
+        self.add_item(discord.ui.InputText(label='Username', min_length=3, max_length=20, required=True, value=member.name))
         self.add_item(discord.ui.InputText(label='Note (optional)', style=discord.InputTextStyle.long, required=False))
 
     async def callback(self, interaction: discord.Interaction):
