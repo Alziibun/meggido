@@ -67,7 +67,11 @@ class EditApplication(discord.ui.Modal):
         self.member = member
         self.note = note
         self.message = message
-        self.add_item(discord.ui.InputText(label='Username', min_length=3, max_length=32, required=True, value=username))
+        self.add_item(discord.ui.InputText(label='Username',
+                                           min_length=3,
+                                           max_length=20,
+                                           required=True,
+                                           value=username if len(username) > 20 else username[:19]))
 
     async def callback(self, interaction: discord.Interaction):
         name = self.children[0].value
@@ -80,7 +84,11 @@ class EditApplication(discord.ui.Modal):
 class Application(discord.ui.Modal):
     def __init__(self, member: discord.Member, *args, **kwargs):
         super().__init__(title="Whitelist Application", *args, **kwargs)
-        self.add_item(discord.ui.InputText(label='Username', min_length=3, max_length=20, required=True, value=member.name))
+        self.add_item(discord.ui.InputText(label='Username',
+                                           min_length=3,
+                                           max_length=20,
+                                           required=True,
+                                           value=member.name if len(member.name) < 20 else member.name[:19]))
         self.add_item(discord.ui.InputText(label='Note (optional)', style=discord.InputTextStyle.long, required=False))
 
     async def callback(self, interaction: discord.Interaction):
