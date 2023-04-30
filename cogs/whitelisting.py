@@ -77,7 +77,8 @@ class EditApplication(discord.ui.Modal):
         name = self.children[0].value
         if check_name(name):
             raise Exception('Name contains invalid characters.')
-        await self.message.edit(embed=application_embed(member=self.member, username=name, note=self.note), view=WLRequestControls(member=self.member, username=name))
+        await self.message.edit(embed=application_embed(member=self.member, username=name, note=self.note),
+                                view=WLRequestControls(member=self.member, username=name, note=self.note))
         await interaction.response.send_message("Application edited", ephemeral=True)
 
 
@@ -98,7 +99,8 @@ class Application(discord.ui.Modal):
         if check_name(name):
             raise Exception('death')
         chan = interaction.guild.get_channel(1037514532639215626)
-        await chan.send(embed = application_embed(interaction.user, username=name, note=note), view = WLRequestControls(interaction.user))
+        await chan.send(embed = application_embed(interaction.user, username=name, note=note),
+                        view = WLRequestControls(interaction.user, username=name, note=note))
         await interaction.response.send_message('Application sent successfully.', ephemeral=True)
 
 class WLRequestControls(discord.ui.View):
