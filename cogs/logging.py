@@ -1,3 +1,5 @@
+import re
+
 import discord
 import os
 import datetime
@@ -5,72 +7,55 @@ from discord.ext import commands, tasks
 
 from dotenv import load_dotenv
 load_dotenv(override=True)
-
-logging_channel = 1104100574158405685
-log_path = "/home/pzuser/Zomboid/server-console.txt"
-
-lines = {}
+console_path = "/home/pzuser/Zomboid/server-console.txt"
+log_channel_id = 1104100574158405685
 
 class ServerConsole:
-    lines = dict()
-    index = 0
+    def __init__(self):
+        self.cursor = 0
+        self.startup = True
+        self.mods = {}
+        self.permissions = {
+            "read" : None,
+            "write" : None
+        }
+        self.PZVersion = None
+        self.servername = None
+        self.port = None
 
-    @classmethod
-    def update(cls):
-        with open(log_path, 'r') as file:
-            file.seek(cls.index)
-            while True:
-                line = file.readline()
-                if line == '':
-                    break
-                else:
-                    cls.add_line(line)
-                    cls.index += 1
+    async def read(self, status, mod_status_callback):
+        searches = {
+            "Zomboid Version": r'(?<=version=)[0-9.]+',
+            "Server Language": r'(?<=language is )[A-Z][A-Z]',
+            "SteamAPI Status": r'(?<=Steam API initialised )\w+',
+            "Public IP":       r'(?<=Public IP:)[0-9.]+',
+        }
+        with open(console_path) as file:
+            file.seek(self.cursor)
+            while (line := file.readline()) != '':
+                if line.startswith("WARN"): continue #skip this
+                if "Loading: /home/pzuser/Zomboid/Server/servertest_SandboxVars.lua" in line:
+                    status("Loading Sandbox Variables")
+                    continue
+                if "Loading world..." in line:
+                    status("Loading world...")
+                    continue
+                if "No valid token provided AND missing email or password. Connecting not possible!" in line:
+                    status("Could not use Discord integration")
+                if "Workshop: GetItemState()" in line:
+                    mod_status = re.search(r'(?<=GetItemState\(\)=)\w+', line).group(0)
+                    mod_id = re.search(r'(?<=ID=)[0-9]+', line).group(0)
+                    mod_status_callback(mod_status, mod_id)
 
-    @classmethod
-    def add_line(cls, line: str):
-        """Compiles and sorts log lines"""
-        line = decode_line(line)
-        if not cls.lines[line['id']]:
-            #create a new line
-            cls.lines[line['id']] = {
-                'type' : line['type'],
-                'category' : line['category'],
-                'content' : line['content']
-            }
-        else:
-            #join the lines together
-            cls.lines[line['id']]['content'] += '\n' + line['content']
-        cls.lines[line['id']]['timestamp'] = line['timestamp']
-
-
-def decode_line(line):
-    return dict(
-        type = line.split(':')[0].strip(),
-        category = line.split(':')[1].split(',')[0].strip(),
-        timestamp = line.split(',')[1].strip().split('>')[0].strip(),
-        id = line.split('>')[1].strip().replace(',', ''),
-        content = line.split('>')[2]
-    )
-
-async def error_embed(dataline):
-    embed = discord.Embed(
-        title=dataline['category'],
-        description=f"```\n{dataline['content']}\n```",
-        color=discord.Color.brand_red())
-    embed.timestamp = dataline['timestamp']
-    return embed
-
-async def general_embed(dataline):
-    embed = discord.Embed(
-        title=dataline['category'],
-        description=dataline['content']
-    )
-    embed.timestamp = dataline['timestamp']
-    return embed
+                for name, search in searches:
+                    yield
 
 
-class Logging(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
 
+
+
+
+    def findServerName(self, line):
+        if "server name is " in line:
+            print("Server name found")
+            self.servername = line.split("server name is ")[1].strip()
